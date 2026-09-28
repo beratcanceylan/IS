@@ -48,7 +48,7 @@ export default function FilterCategoryScreen() {
   );
 }
 
-function CategoryBody({ category }: { category: FilterCategory }) {
+function CategoryBody({ category }: Readonly<{ category: FilterCategory }>) {
   const { draft, patch } = useFilterDraft();
   const one = <T,>(v: T | undefined) => (v === undefined ? [] : [v]);
 
@@ -112,7 +112,7 @@ function KpssBody() {
         <TextInput
           value={score}
           onChangeText={(t) => {
-            const clean = t.replace(',', '.').replace(/[^\d.]/g, '');
+            const clean = t.replace(',', '.').replaceAll(/[^\d.]/g, '');
             setScore(clean);
             const n = Number(clean);
             patch({ kpssMyScore: clean && Number.isFinite(n) && n > 0 && n <= 100 ? n : undefined });

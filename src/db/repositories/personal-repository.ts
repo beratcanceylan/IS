@@ -61,14 +61,14 @@ export async function getPersonalState(db: Db, jobId: number): Promise<PersonalS
 }
 
 /** Başvuru durumları: "Başvurdum" ve sonrası seçildiğinde başvuru tarihi bir kez otomatik kaydedilir. */
-const APPLIED_STATES: PersonalStatus[] = ['applied', 'interview', 'waiting', 'rejected', 'offer'];
+const APPLIED_STATES: Set<PersonalStatus> = new Set(['applied', 'interview', 'waiting', 'rejected', 'offer']);
 
 export async function setStatus(db: Db, jobId: number, status: PersonalStatus | null, now: string): Promise<void> {
   if (status === null) {
     await db.runAsync('DELETE FROM application_status WHERE job_id = ?', [jobId]);
     return;
   }
-  const appliedAt = APPLIED_STATES.includes(status) ? now : null;
+  const appliedAt = APPLIED_STATES.has(status) ? now : null;
   await db.runAsync(
     `INSERT INTO application_status (job_id, status, applied_at, updated_at) VALUES (?, ?, ?, ?)
      ON CONFLICT (job_id) DO UPDATE SET

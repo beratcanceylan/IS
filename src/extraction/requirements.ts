@@ -76,7 +76,7 @@ export function extractSalary(text: string | null | undefined): SalaryExtraction
   const num = String.raw`(\d{1,3}(?:[.\s]\d{3})+|\d{4,7})(?:,\d{1,2})?`;
   const range = new RegExp(String.raw`(?:₺\s*)?${num}\s*(?:TL|₺)?\s*[-–]\s*(?:₺\s*)?${num}\s*(?:TL|₺|türk lirası)`, 'iu').exec(text)
     ?? new RegExp(String.raw`₺\s*${num}\s*[-–]\s*₺?\s*${num}`, 'iu').exec(text);
-  const toNumber = (s: string) => Number(s.replace(/[.\s]/g, ''));
+  const toNumber = (s: string) => Number(s.replaceAll(/[.\s]/g, ''));
   if (range) {
     const a = toNumber(range[1]);
     const b = toNumber(range[2]);

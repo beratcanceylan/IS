@@ -6,14 +6,14 @@ import { normalizeTr } from '@/utils/turkish-normalization';
  * bu yüzden kelime başı `(?<!\S)` ile ifade edilir. (JS'de `\b` Türkçe harflerde çalışmaz.)
  * Sıra önemlidir: "yüksek lisans" ve "ön lisans" düz "lisans"tan önce yakalanıp metinden çıkarılır.
  */
-const W = '(?<!\\S)';
+const W = String.raw`(?<!\S)`;
 const PATTERNS: [EducationLevel, RegExp][] = [
-  ['doctorate', new RegExp(`${W}doktora\\p{L}*`, 'gu')],
-  ['master', new RegExp(`${W}yüksek lisans\\p{L}*`, 'gu')],
-  ['associate', new RegExp(`${W}(?:ön ?lisans\\p{L}*|meslek yüksekokul\\p{L}*|iki yıllık|2 yıllık)`, 'gu')],
-  ['bachelor', new RegExp(`${W}(?:lisans\\p{L}*|fakülte\\p{L}*|dört yıllık|4 yıllık)`, 'gu')],
-  ['highSchool', new RegExp(`${W}(?:lise\\p{L}*|ortaöğretim\\p{L}*|ortaöğrenim\\p{L}*)`, 'gu')],
-  ['primary', new RegExp(`${W}(?:ilköğretim\\p{L}*|ilkokul\\p{L}*|ortaokul\\p{L}*|ilköğrenim\\p{L}*)`, 'gu')],
+  ['doctorate', new RegExp(String.raw`${W}doktora\p{L}*`, 'gu')],
+  ['master', new RegExp(String.raw`${W}yüksek lisans\p{L}*`, 'gu')],
+  ['associate', new RegExp(String.raw`${W}(?:ön ?lisans\p{L}*|meslek yüksekokul\p{L}*|iki yıllık|2 yıllık)`, 'gu')],
+  ['bachelor', new RegExp(String.raw`${W}(?:lisans\p{L}*|fakülte\p{L}*|dört yıllık|4 yıllık)`, 'gu')],
+  ['highSchool', new RegExp(String.raw`${W}(?:lise\p{L}*|ortaöğretim\p{L}*|ortaöğrenim\p{L}*)`, 'gu')],
+  ['primary', new RegExp(String.raw`${W}(?:ilköğretim\p{L}*|ilkokul\p{L}*|ortaokul\p{L}*|ilköğrenim\p{L}*)`, 'gu')],
 ];
 
 /**

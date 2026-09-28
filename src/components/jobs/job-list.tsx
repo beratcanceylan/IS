@@ -47,7 +47,7 @@ interface Props {
   onItemPress?: (id: number) => void;
 }
 
-export function JobList({ items, sectioned, newCount, header, empty, refreshing, onRefresh, onEndReached, footer, onItemPress }: Props) {
+export function JobList({ items, sectioned, newCount, header, empty, refreshing, onRefresh, onEndReached, footer, onItemPress }: Readonly<Props>) {
   const c = useColors();
   const router = useRouter();
   const rows = useMemo<ListRow[]>(

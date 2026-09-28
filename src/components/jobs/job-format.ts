@@ -36,8 +36,11 @@ export function locationLine(job: Pick<JobListItem, 'city' | 'district' | 'locat
 export function educationLabel(levels: EducationLevel[]): string | null {
   if (!levels.length) return null;
   const sorted = EDUCATION_ORDER.filter((l) => levels.includes(l));
-  if (sorted.length === 1) return EDUCATION_LABELS[sorted[0]];
-  return `${EDUCATION_LABELS[sorted[0]]}–${EDUCATION_LABELS[sorted[sorted.length - 1]]}`;
+  const first = sorted[0];
+  const last = sorted.at(-1);
+  if (first === undefined || last === undefined) return null;
+  if (first === last) return EDUCATION_LABELS[first];
+  return `${EDUCATION_LABELS[first]}–${EDUCATION_LABELS[last]}`;
 }
 
 export function kpssLabel(job: Pick<JobListItem, 'kpssRequired' | 'kpssScoreTypes' | 'kpssMinimumScore'>): string | null {

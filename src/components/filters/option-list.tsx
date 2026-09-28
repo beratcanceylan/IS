@@ -17,12 +17,12 @@ export function OptionList<T extends string>({
   selected,
   onChange,
   multiple,
-}: {
+}: Readonly<{
   options: Option<T>[];
   selected: T[];
   onChange: (values: T[]) => void;
   multiple?: boolean;
-}) {
+}>) {
   const c = useColors();
   const toggle = (v: T) => {
     if (multiple) onChange(selected.includes(v) ? selected.filter((x) => x !== v) : [...selected, v]);

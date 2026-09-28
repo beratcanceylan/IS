@@ -27,7 +27,7 @@ const ICONS = {
 
 export type IconName = keyof typeof ICONS;
 
-export function Icon({ name, size = 20, color }: { name: IconName; size?: number; color?: string }) {
+export function Icon({ name, size = 20, color }: Readonly<{ name: IconName; size?: number; color?: string }>) {
   const c = useColors();
   return <SymbolView name={ICONS[name]} size={size} tintColor={color ?? c.textSecondary} />;
 }

@@ -24,7 +24,7 @@ interface Props {
  *   Konum · kaynak · yayın
  *   [rozetler]                 son başvuru
  */
-function JobRowBase({ job, onPress }: Props) {
+function JobRowBase({ job, onPress }: Readonly<Props>) {
   const c = useColors();
   const deadline = deadlineInfo(job.applicationDeadline);
   const location = locationLine(job) || (job.sector === 'public' ? 'Konum belirtilmemiş' : '');

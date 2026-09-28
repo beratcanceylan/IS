@@ -7,7 +7,7 @@ import { useColors } from '@/theme/use-theme';
 import { Icon, type IconName } from './icon';
 import { Text } from './text';
 
-export function Badge({ label, tone = 'neutral' }: { label: string; tone?: 'neutral' | 'accent' }) {
+export function Badge({ label, tone = 'neutral' }: Readonly<{ label: string; tone?: 'neutral' | 'accent' }>) {
   const c = useColors();
   return (
     <View style={[styles.badge, { backgroundColor: tone === 'accent' ? c.accentSoft : c.badge }]}>
@@ -23,11 +23,11 @@ export function TextTabs<T extends string>({
   options,
   value,
   onChange,
-}: {
+}: Readonly<{
   options: readonly { value: T; label: string }[];
   value: T;
   onChange: (v: T) => void;
-}) {
+}>) {
   const c = useColors();
   return (
     <View style={styles.tabs} accessibilityRole="tablist">
@@ -56,11 +56,11 @@ export function Segmented<T extends string>({
   options,
   value,
   onChange,
-}: {
+}: Readonly<{
   options: readonly { value: T; label: string }[];
   value: T;
   onChange: (v: T) => void;
-}) {
+}>) {
   const c = useColors();
   return (
     <View style={[styles.segmented, { backgroundColor: c.badge }]}>
@@ -89,13 +89,13 @@ export function IconButton({
   label,
   busy,
   color,
-}: {
+}: Readonly<{
   icon: IconName;
   onPress: () => void;
   label: string;
   busy?: boolean;
   color?: string;
-}) {
+}>) {
   const c = useColors();
   return (
     <Pressable onPress={onPress} accessibilityLabel={label} accessibilityRole="button" hitSlop={8} style={styles.iconButton} disabled={busy}>
@@ -111,14 +111,14 @@ export function Button({
   icon,
   disabled,
   flex,
-}: {
+}: Readonly<{
   label: string;
   onPress: () => void;
   kind?: 'primary' | 'secondary' | 'plain';
   icon?: IconName;
   disabled?: boolean;
   flex?: boolean;
-}) {
+}>) {
   const c = useColors();
   const bg = kind === 'primary' ? c.accent : kind === 'secondary' ? c.badge : 'transparent';
   const fg = kind === 'primary' ? c.onAccent : kind === 'secondary' ? c.text : c.accent;
@@ -140,7 +140,7 @@ export function Button({
   );
 }
 
-export function EmptyState({ title, action }: { title: string; action?: ReactNode }) {
+export function EmptyState({ title, action }: Readonly<{ title: string; action?: ReactNode }>) {
   return (
     <View style={styles.empty}>
       <Text variant="body" tone="secondary" style={{ textAlign: 'center' }}>

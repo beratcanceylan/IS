@@ -8,12 +8,12 @@ import { Icon } from './icon';
 import { Text } from './text';
 
 /** İnce ayraç; soldan metin hizasında başlar (native liste gibi). */
-export function Separator({ inset = GUTTER }: { inset?: number }) {
+export function Separator({ inset = GUTTER }: Readonly<{ inset?: number }>) {
   const c = useColors();
   return <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.separator, marginLeft: inset }} />;
 }
 
-export function SectionHeader({ title, right }: { title: string; right?: ReactNode }) {
+export function SectionHeader({ title, right }: Readonly<{ title: string; right?: ReactNode }>) {
   return (
     <View style={styles.sectionHeader}>
       <Text variant="sectionTitle" tone="secondary">
@@ -36,7 +36,7 @@ export interface RowProps {
 }
 
 /** Ayarlar tarzı satır: etiket solda, değer sağda. */
-export function Row({ label, value, detail, onPress, chevron = !!onPress, right, destructive, style }: RowProps) {
+export function Row({ label, value, detail, onPress, chevron = !!onPress, right, destructive, style }: Readonly<RowProps>) {
   const c = useColors();
   return (
     <Pressable
@@ -66,7 +66,7 @@ export function Row({ label, value, detail, onPress, chevron = !!onPress, right,
 }
 
 /** Gruplanmış satırlar: arada ayraç, üst/alt kenarda ince çizgi. Kart değil. */
-export function Group({ children }: { children: ReactNode[] | ReactNode }) {
+export function Group({ children }: Readonly<{ children: ReactNode[] | ReactNode }>) {
   const c = useColors();
   const items = (Array.isArray(children) ? children : [children]).filter(Boolean);
   return (

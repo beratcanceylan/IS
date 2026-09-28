@@ -10,7 +10,7 @@ export interface AppTextProps extends TextProps {
   tone?: Tone;
 }
 
-export function Text({ variant = 'body', tone = 'primary', style, ...rest }: AppTextProps) {
+export function Text({ variant = 'body', tone = 'primary', style, ...rest }: Readonly<AppTextProps>) {
   const c = useColors();
   const color = {
     primary: c.text,

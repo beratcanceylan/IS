@@ -64,7 +64,7 @@ export function mapDetail(base: NormalizedJob, d: KariyerKapisiDetail): Normaliz
     department: d.birimAdi,
     employmentCategory: d.ilanTuru ?? base.employmentCategory,
     description,
-    summary: description ? truncate(description.replace(/\s+/g, ' '), 280) : null,
+    summary: description ? truncate(description.replaceAll(/\s+/g, ' '), 280) : null,
     applicationStartAt: d.basTarih ? parseIsoLocal(d.basTarih) : null,
     applicationDeadline: d.bitTarih ? parseIsoLocal(d.bitTarih) : null,
     // 0 "belirtilmemiş" anlamında dönüyor; kadro sayısı yoksa başlıktan çıkarılır.

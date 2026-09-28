@@ -11,7 +11,7 @@ interface FilterDraft {
 const Ctx = createContext<FilterDraft | null>(null);
 
 /** Filtre ekranları arasında paylaşılan taslak; "N ilanı göster" ile akışa uygulanır. */
-export function FilterDraftProvider({ initial, children }: { initial: JobFilter; children: ReactNode }) {
+export function FilterDraftProvider({ initial, children }: Readonly<{ initial: JobFilter; children: ReactNode }>) {
   const [draft, setDraft] = useState<JobFilter>(initial);
   const patch = (p: Partial<JobFilter>) =>
     setDraft((d) => {

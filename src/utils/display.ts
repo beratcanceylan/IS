@@ -28,7 +28,7 @@ export function displayCase(text: string | null | undefined): string {
     .split(/(\s+)/)
     .map((word, i) => {
       if (/^\s+$/.test(word)) return word;
-      const bare = word.replace(/^[("'“]+|[)"'”,.:;]+$/g, '');
+      const bare = word.replaceAll(/^[("'“]+|[)"'”,.:;]+$/g, '');
       const parenthesizedAbbreviation = /^[A-ZÇĞİÖŞÜ]{2,6}$/.test(bare) && /^\(.*\)[,.]?$/.test(word);
       if (ACRONYMS.has(bare) || /^P\d{1,3}$/.test(bare) || /^\d/.test(bare) || parenthesizedAbbreviation) {
         return word;
@@ -61,5 +61,5 @@ export function displayOrganization(organization: string | null): string {
 
 /** 2148 → "2.148". Intl'e bağımlı değil. */
 export function formatCount(n: number): string {
-  return String(Math.trunc(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return String(Math.trunc(n)).replaceAll(/\B(?=(\d{3})+(?!\d))/g, '.');
 }

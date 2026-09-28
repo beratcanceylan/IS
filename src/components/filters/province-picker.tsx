@@ -20,11 +20,11 @@ export function ProvincePicker({
   value,
   onChange,
   header,
-}: {
+}: Readonly<{
   value: LocationSelection[];
   onChange: (v: LocationSelection[]) => void;
   header?: ReactElement;
-}) {
+}>) {
   const c = useColors();
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -131,14 +131,14 @@ function CheckRow({
   onPress,
   accessory,
   indent,
-}: {
+}: Readonly<{
   label: string;
   caption?: string;
   checked: boolean;
   onPress: () => void;
   accessory?: ReactElement;
   indent?: boolean;
-}) {
+}>) {
   const c = useColors();
   return (
     <Pressable

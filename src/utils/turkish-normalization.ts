@@ -16,20 +16,20 @@ const COMBINING_DOT_ABOVE = /̇/g;
 export function trLower(input: string): string {
   return input
     .normalize('NFC')
-    .replace(/I/g, 'ı')
-    .replace(/İ/g, 'i')
+    .replaceAll('I', 'ı')
+    .replaceAll('İ', 'i')
     .toLowerCase()
-    .replace(COMBINING_DOT_ABOVE, '');
+    .replaceAll(COMBINING_DOT_ABOVE, '');
 }
 
 export function trUpper(input: string): string {
-  return input.normalize('NFC').replace(/i/g, 'İ').replace(/ı/g, 'I').toUpperCase();
+  return input.normalize('NFC').replaceAll('i', 'İ').replaceAll('ı', 'I').toUpperCase();
 }
 
 /** Türkçe başlık biçimi: "TEKİRDAĞ BÜYÜKŞEHİR" → "Tekirdağ Büyükşehir". */
 export function trTitleCase(input: string): string {
   // Kesme işaretinden sonra büyük harf yapılmaz: "Müdürlüğü'ne".
-  return trLower(input).replace(/(^|[\s\-/(."“])(\p{L})/gu, (_m, sep: string, ch: string) => sep + trUpper(ch));
+  return trLower(input).replaceAll(/(^|[\s\-/(."“])(\p{L})/gu, (_m, sep: string, ch: string) => sep + trUpper(ch));
 }
 
 // Harf ve rakam dışındaki her şey ayraç kabul edilir.
@@ -38,7 +38,7 @@ const NON_WORD = /[^\p{L}\p{N}]+/gu;
 /** Karşılaştırma için normalize: küçük harf, noktalama → boşluk, tek boşluk. Türkçe harfler korunur. */
 export function normalizeTr(input: string | null | undefined): string {
   if (!input) return '';
-  return trLower(input).replace(NON_WORD, ' ').trim();
+  return trLower(input).replaceAll(NON_WORD, ' ').trim();
 }
 
 const FOLD_MAP: Record<string, string> = {
@@ -55,7 +55,7 @@ const FOLD_MAP: Record<string, string> = {
 
 /** ASCII katlama. `normalizeTr` sonrasında uygulanır. */
 export function foldTr(input: string | null | undefined): string {
-  return normalizeTr(input).replace(/[çğıöşüâîû]/g, (ch) => FOLD_MAP[ch] ?? ch);
+  return normalizeTr(input).replaceAll(/[çğıöşüâîû]/g, (ch) => FOLD_MAP[ch] ?? ch);
 }
 
 const TURKISH_SPECIFIC = /[çğıöşüÇĞİÖŞÜ]/;
@@ -95,10 +95,10 @@ export function normalizeOrganization(input: string | null | undefined): string 
   for (const noise of ORG_NOISE) {
     n = n.split(` ${noise} `).join(' ');
   }
-  return n.replace(/\s+/g, ' ').trim();
+  return n.replaceAll(/\s+/g, ' ').trim();
 }
 
 /** LIKE sorgusunda `%`, `_` ve kaçış karakterini etkisizleştirir (ESCAPE '\\' ile kullanılır). */
 export function escapeLike(input: string): string {
-  return input.replace(/[\\%_]/g, (ch) => `\\${ch}`);
+  return input.replaceAll(/[\\%_]/g, (ch) => `\\${ch}`);
 }

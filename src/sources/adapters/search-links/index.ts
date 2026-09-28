@@ -11,7 +11,7 @@ const enc = (s: string | undefined | null) => encodeURIComponent((s ?? '').trim(
 
 function withParams(base: string, params: Record<string, string | null | undefined>): string {
   const q = Object.entries(params)
-    .filter(([, v]) => v && v.trim())
+    .filter(([, v]) => v?.trim())
     .map(([k, v]) => `${k}=${enc(v)}`)
     .join('&');
   return q ? `${base}?${q}` : base;

@@ -37,13 +37,11 @@ export function buildFilterWhere(filter: JobFilter, opts: FilterSqlOptions): Whe
   const orUnknown = (known: string, unknown: string) => (strict ? `(${known})` : `(${known} OR ${unknown})`);
   const placeholders = (n: number) => Array.from({ length: n }, () => '?').join(', ');
 
-  where.push('NOT EXISTS (SELECT 1 FROM hidden_jobs h WHERE h.job_id = j.id)');
-  where.push('(j.duplicate_group_id IS NULL OR j.duplicate_group_id = j.id)');
+  where.push('NOT EXISTS (SELECT 1 FROM hidden_jobs h WHERE h.job_id = j.id)', '(j.duplicate_group_id IS NULL OR j.duplicate_group_id = j.id)');
   if (filter.includeExpired) {
     where.push(`j.lifecycle != 'archived'`);
   } else {
-    where.push(`j.lifecycle IN ('active', 'possiblyRemoved')`);
-    where.push('(j.application_deadline IS NULL OR j.application_deadline >= ?)');
+    where.push(`j.lifecycle IN ('active', 'possiblyRemoved')`, '(j.application_deadline IS NULL OR j.application_deadline >= ?)');
     params.push(nowIso);
   }
 
@@ -165,12 +163,12 @@ export function buildFilterWhere(filter: JobFilter, opts: FilterSqlOptions): Whe
   // Anahtar kelimeler: dahil edilenler tüm metinde (OR), hariç tutulanlar yalnızca başlık+kurumda.
   const include = (filter.includeKeywords ?? []).map(keywordPattern).filter((k) => k !== null);
   if (include.length) {
-    where.push(`(${include.map((k) => (k.folded ? 'j.search_folded' : 'j.search_text') + ` LIKE ? ESCAPE '\\'`).join(' OR ')})`);
+    where.push(`(${include.map((k) => (k.folded ? 'j.search_folded' : 'j.search_text') + String.raw` LIKE ? ESCAPE '\'`).join(' OR ')})`);
     params.push(...include.map((k) => k.pattern));
   }
   const exclude = (filter.excludeKeywords ?? []).map(keywordPattern).filter((k) => k !== null);
   for (const k of exclude) {
-    where.push(`${k.folded ? 'j.headline_folded' : 'j.headline_norm'} NOT LIKE ? ESCAPE '\\'`);
+    where.push(String.raw`${k.folded ? 'j.headline_folded' : 'j.headline_norm'} NOT LIKE ? ESCAPE '\'`);
     params.push(k.pattern);
   }
 
@@ -186,7 +184,7 @@ export function buildFilterWhere(filter: JobFilter, opts: FilterSqlOptions): Whe
       for (const token of q.split(/\s+/).slice(0, 8)) {
         const k = prefixPattern(token);
         if (!k) continue;
-        where.push(`${k.folded ? 'j.search_folded' : 'j.search_text'} LIKE ? ESCAPE '\\'`);
+        where.push(String.raw`${k.folded ? 'j.search_folded' : 'j.search_text'} LIKE ? ESCAPE '\'`);
         params.push(k.pattern);
       }
     }

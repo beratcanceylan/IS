@@ -14,7 +14,7 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
  * Ayarlar açılışta bir kez DB'den okunur (bkz. kök layout) ve burada tutulur.
  * `update` UI'ı hemen günceller, DB'ye arka planda yazar.
  */
-export function SettingsProvider({ initial, children }: { initial: AppSettings; children: ReactNode }) {
+export function SettingsProvider({ initial, children }: Readonly<{ initial: AppSettings; children: ReactNode }>) {
   const [settings, setSettings] = useState(initial);
   const update = useCallback(<K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings((s) => ({ ...s, [key]: value }));

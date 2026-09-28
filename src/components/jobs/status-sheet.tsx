@@ -18,12 +18,12 @@ export function StatusSheet({
   value,
   onSelect,
   onClose,
-}: {
+}: Readonly<{
   visible: boolean;
   value: PersonalStatus | null;
   onSelect: (s: PersonalStatus | null) => void;
   onClose: () => void;
-}) {
+}>) {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const options: { value: PersonalStatus | null; label: string }[] = [

@@ -110,7 +110,7 @@ function AppNavigator() {
   );
 }
 
-function StartupError({ message, onRetry }: { message: string; onRetry: () => void }) {
+function StartupError({ message, onRetry }: Readonly<{ message: string; onRetry: () => void }>) {
   const c = useColors();
   return (
     <View style={[styles.error, { backgroundColor: c.background }]}>

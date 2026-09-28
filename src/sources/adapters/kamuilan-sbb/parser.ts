@@ -26,7 +26,7 @@ export class PageFormatError extends Error {
 }
 
 function clean(s: string): string {
-  return s.replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
+  return s.replaceAll(' ', ' ').replaceAll(/\s+/g, ' ').trim();
 }
 
 export function parseTimeline(html: string): KamuilanItem[] {
@@ -57,7 +57,7 @@ export function parseTimeline(html: string): KamuilanItem[] {
         dayLabel,
         organization,
         title,
-        rangeText: rangeRaw.replace(/[()]/g, '').trim() || null,
+        rangeText: rangeRaw.replaceAll(/[()]/g, '').trim() || null,
         href: a.attribs.href ?? null,
         logo: logo ? logo.split('#')[0] : null,
       });

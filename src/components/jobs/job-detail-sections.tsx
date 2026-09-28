@@ -13,7 +13,7 @@ import { formatDateTime, formatLongDate } from '@/utils/dates';
 
 import { kpssLabel } from './job-format';
 
-export function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
+export function DetailSection({ title, children }: Readonly<{ title: string; children: React.ReactNode }>) {
   return (
     <View style={styles.section}>
       <Text variant="sectionTitle" tone="secondary" style={styles.sectionTitle}>
@@ -25,7 +25,7 @@ export function DetailSection({ title, children }: { title: string; children: Re
 }
 
 /** Etiket–değer satırı. Değer yoksa hiç çizilmez. */
-export function Fact({ label, value, emphasize }: { label: string; value: string | null | undefined; emphasize?: boolean }) {
+export function Fact({ label, value, emphasize }: Readonly<{ label: string; value: string | null | undefined; emphasize?: boolean }>) {
   if (!value) return null;
   return (
     <View style={styles.fact}>
@@ -63,7 +63,7 @@ function ageText(job: JobPosting): string | null {
   return null;
 }
 
-export function ApplicationFacts({ job }: { job: JobPosting }) {
+export function ApplicationFacts({ job }: Readonly<{ job: JobPosting }>) {
   return (
     <>
       <Fact label="Başvuru başlangıcı" value={formatDateTime(job.applicationStartAt)} />
@@ -77,7 +77,7 @@ export function ApplicationFacts({ job }: { job: JobPosting }) {
 const COLLAPSED_CHARS = 1200;
 
 /** Uzun ilan metni: ilk kısmı gösterilir, istenirse tamamı. */
-export function LongText({ text }: { text: string }) {
+export function LongText({ text }: Readonly<{ text: string }>) {
   const [expanded, setExpanded] = useState(false);
   const long = text.length > COLLAPSED_CHARS;
   const shown = !long || expanded ? text : `${text.slice(0, COLLAPSED_CHARS).trimEnd()}…`;
@@ -101,11 +101,11 @@ export function SourceList({
   job,
   duplicates,
   onOpen,
-}: {
+}: Readonly<{
   job: JobPosting;
   duplicates: DuplicateMember[];
   onOpen: (url: string) => void;
-}) {
+}>) {
   const c = useColors();
   const all = [{ id: job.id, sourceId: job.sourceId, sourceUrl: job.canonicalUrl ?? job.sourceUrl }, ...duplicates];
   return (

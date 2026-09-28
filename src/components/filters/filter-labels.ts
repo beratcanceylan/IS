@@ -130,7 +130,7 @@ export function locationSummary(locations: LocationSelection[] | undefined): str
 export function filterSummaries(f: JobFilter) {
   const kpssParts = [
     f.kpss && f.kpss !== 'any' ? labelOf(KPSS_OPTIONS, f.kpss) : null,
-    labelsOf(KPSS_TYPE_OPTIONS, f.kpssScoreTypes)?.replace(/ \([^)]*\)/g, ''),
+    labelsOf(KPSS_TYPE_OPTIONS, f.kpssScoreTypes)?.replaceAll(/ \([^)]*\)/g, ''),
     f.kpssMyScore != null ? `puanım ${f.kpssMyScore}` : null,
   ].filter(Boolean);
   return {

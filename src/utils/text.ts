@@ -21,9 +21,9 @@ const NAMED_ENTITIES: Record<string, string> = {
 };
 
 export function decodeHtmlEntities(input: string): string {
-  return input.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, body: string) => {
-    if (body[0] === '#') {
-      const code = body[1] === 'x' || body[1] === 'X' ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
+  return input.replaceAll(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, body: string) => {
+    if (body.startsWith('#')) {
+      const code = body[1] === 'x' || body[1] === 'X' ? Number.parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
       return Number.isFinite(code) ? String.fromCodePoint(code) : match;
     }
     return NAMED_ENTITIES[body] ?? match;
@@ -33,31 +33,31 @@ export function decodeHtmlEntities(input: string): string {
 /** Boşlukları sadeleştirir; paragraf kırılımlarını (en fazla bir boş satır) korur. */
 export function cleanWhitespace(input: string): string {
   return input
-    .replace(/ /g, ' ')
-    .replace(/\r\n?/g, '\n')
-    .replace(/[ \t\f\v]+/g, ' ')
-    .replace(/ *\n */g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
+    .replaceAll(' ', ' ')
+    .replaceAll(/\r\n?/g, '\n')
+    .replaceAll(/[ \t\f\v]+/g, ' ')
+    .replaceAll(/ *\n */g, '\n')
+    .replaceAll(/\n{3,}/g, '\n\n')
     .trim();
 }
 
 /** Kariyer Kapısı gibi kaynakların kullandığı BBCode ([b], [size=14pt], [url=..]) etiketlerini düz metne çevirir. */
 export function stripBbcode(input: string): string {
   return input
-    .replace(/\[url=([^\]]+)\]([\s\S]*?)\[\/url\]/gi, (_m, url: string, label: string) =>
+    .replaceAll(/\[url=([^\]]+)\]([\s\S]*?)\[\/url\]/gi, (_m, url: string, label: string) =>
       label.trim() && label.trim() !== url.trim() ? `${label} (${url})` : url,
     )
-    .replace(/\[\*\]/g, '• ')
-    .replace(/\[\/?(?:b|i|u|s|size|color|justify|center|left|right|font|list|quote|table|tr|td|th|img|sub|sup|hr|url)(?:=[^\]]*)?\]/gi, '');
+    .replaceAll('[*]', '• ')
+    .replaceAll(/\[\/?(?:b|i|u|s|size|color|justify|center|left|right|font|list|quote|table|tr|td|th|img|sub|sup|hr|url)(?:=[^\]]*)?\]/gi, '');
 }
 
 export function stripHtml(input: string): string {
   return decodeHtmlEntities(
     input
-      .replace(/<(script|style)[\s\S]*?<\/\1>/gi, '')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/(p|div|li|tr|h\d)>/gi, '\n')
-      .replace(/<[^>]+>/g, ''),
+      .replaceAll(/<(script|style)[\s\S]*?<\/\1>/gi, '')
+      .replaceAll(/<br\s*\/?>/gi, '\n')
+      .replaceAll(/<\/(p|div|li|tr|h\d)>/gi, '\n')
+      .replaceAll(/<[^>]+>/g, ''),
   );
 }
 

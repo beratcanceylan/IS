@@ -49,7 +49,7 @@ Object.assign(MONTH_LOOKUP, {
 });
 
 function lowerTrSimple(s: string): string {
-  return s.replace(/I/g, 'ı').replace(/İ/g, 'i').toLowerCase().replace(/̇/g, '');
+  return s.replaceAll('I', 'ı').replaceAll('İ', 'i').toLowerCase().replaceAll('̇', '');
 }
 
 export interface IstanbulParts {
@@ -230,7 +230,7 @@ export interface DateRange {
  */
 export function parseDateRange(text: string | null | undefined, reference: Date = new Date()): DateRange {
   if (!text) return { start: null, end: null };
-  const cleaned = text.replace(/[()]/g, ' ').trim();
+  const cleaned = text.replaceAll(/[()]/g, ' ').trim();
   // Önce boşluklu ayraç ("21 Eylül - 30 Eylül"); yoksa yalnızca yıl ya da ay adından sonra gelen tire
   // ("01.10.2026-15.10.2026", "21 Eylül-30 Eylül"). "25-09-2026" içindeki tireler bölünmez.
   let parts = cleaned.split(/\s+[-–—]\s+/);

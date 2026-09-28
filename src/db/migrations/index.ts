@@ -17,7 +17,7 @@ export interface Migration {
  */
 export const MIGRATIONS: readonly Migration[] = [migration001, migration002];
 
-export const LATEST_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;
+export const LATEST_VERSION = Math.max(...MIGRATIONS.map((migration) => migration.version));
 
 export async function getSchemaVersion(db: Db): Promise<number> {
   const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');

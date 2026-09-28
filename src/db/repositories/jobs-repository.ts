@@ -271,7 +271,7 @@ export async function queryFeed(db: Db, q: FeedQuery): Promise<FeedPage> {
   );
   const hasMore = rows.length > limit;
   const items = rows.slice(0, limit).map(rowToListItem);
-  const last = items[items.length - 1];
+  const last = items.at(-1);
   return {
     items,
     nextCursor: hasMore && last ? { isNew: last.isNew, sortAt: last.sortAt, id: last.id } : null,

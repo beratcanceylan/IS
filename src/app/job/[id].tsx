@@ -177,7 +177,7 @@ export default function JobDetailScreen() {
 }
 
 /** Kişisel not; klavye kapanınca kaydedilir. */
-function NoteField({ initial, onSave }: { initial: string; onSave: (v: string) => void }) {
+function NoteField({ initial, onSave }: Readonly<{ initial: string; onSave: (v: string) => void }>) {
   const c = useColors();
   const [value, setValue] = useState(initial);
   return (
