@@ -11,6 +11,7 @@ import { Text } from '@/components/common/text';
 import { ApplicationFacts, DetailSection, Fact, LongText, requirementFacts, SourceList } from '@/components/jobs/job-detail-sections';
 import { deadlineInfo, detailFacts, locationLine, STATUS_LABELS } from '@/components/jobs/job-format';
 import { StatusSheet } from '@/components/jobs/status-sheet';
+import type { JobPosting } from '@/domain/job';
 import { useJobActions, useJobDetail } from '@/hooks/use-jobs';
 import { markViewed } from '@/services/jobs-service';
 import { getSource, sourceDisplayName } from '@/sources/registry';
@@ -45,9 +46,6 @@ export default function JobDetailScreen() {
   if (!detail.data) return <EmptyState title="İlan bulunamadı." />;
 
   const { job, duplicates, personal } = detail.data;
-  const deadline = deadlineInfo(job.applicationDeadline);
-  const facts = detailFacts(job);
-  const requirements = requirementFacts(job);
   const source = getSource(job.sourceId);
   const originalUrl = job.canonicalUrl ?? job.sourceUrl;
   const applyUrl = job.applicationUrl ?? originalUrl;
@@ -66,41 +64,7 @@ export default function JobDetailScreen() {
     <View style={[styles.flex, { backgroundColor: c.background }]}>
       <Stack.Screen options={{ title: '' }} />
       <ScrollView contentContainerStyle={{ paddingBottom: space.xxxl }}>
-        <View style={styles.head}>
-          <Text variant="headline" selectable>
-            {displayTitle(job.title, job.organization)}
-          </Text>
-          {job.organization ? (
-            <Text variant="bodyStrong" tone="secondary" selectable>
-              {displayOrganization(job.organization)}
-            </Text>
-          ) : null}
-          <Text variant="meta" tone="tertiary">
-            {[locationLine(job) || 'Konum belirtilmemiş', job.publishedAt ? formatLongDate(job.publishedAt) : null].filter(Boolean).join(' · ')}
-          </Text>
-          <Text variant="meta" tone="tertiary">
-            Kaynak: {sourceDisplayName(job.sourceId)}
-            {duplicates.length ? ` · ayrıca ${duplicates.length} kaynakta daha bulundu` : ''}
-          </Text>
-          {deadline ? (
-            <View style={styles.deadline}>
-              <Icon name="clock" size={16} color={deadline.urgent ? c.critical : c.textSecondary} />
-              <Text variant="bodyStrong" tone={deadline.urgent ? 'critical' : 'primary'}>
-                {deadline.label === 'Süresi doldu' ? 'Başvuru süresi doldu' : `Son başvuru ${formatLongDate(job.applicationDeadline)}`}
-              </Text>
-              {deadline.label !== 'Süresi doldu' && !deadline.label.startsWith('Son başvuru') ? (
-                <Text variant="meta" tone={deadline.urgent ? 'critical' : 'secondary'}>
-                  · {deadline.label}
-                </Text>
-              ) : null}
-            </View>
-          ) : null}
-          {facts.length ? (
-            <Text variant="meta" tone="secondary" style={styles.facts}>
-              {facts.join('  ·  ')}
-            </Text>
-          ) : null}
-        </View>
+        <JobHeader job={job} duplicateCount={duplicates.length} />
 
         <DetailSection title="Takip">
           <Pressable onPress={() => setStatusOpen(true)} style={styles.statusRow} accessibilityRole="button">
@@ -116,28 +80,8 @@ export default function JobDetailScreen() {
           <NoteField initial={personal.note ?? ''} onSave={(value) => actions.note.mutate({ id, value })} />
         </DetailSection>
 
-        {job.description ? (
-          <DetailSection title="İlan metni">
-            <LongText text={job.description} />
-          </DetailSection>
-        ) : (
-          <DetailSection title="İlan metni">
-            <Text variant="meta" tone="tertiary">
-              {job.detailFetchedAt ? 'Kaynak ilan metni sunmuyor.' : 'Bu kaynakta yalnızca özet bilgi var. Ayrıntılar için orijinal ilanı aç.'}
-            </Text>
-          </DetailSection>
-        )}
-
-        {requirements.length ? (
-          <DetailSection title="Şartlar">
-            {requirements.map((f) => (
-              <Fact key={f.label} label={f.label} value={f.value} />
-            ))}
-            <Text variant="caption" tone="tertiary" style={{ marginTop: space.xs }}>
-              İlan metninden otomatik çıkarıldı. Başvurmadan önce orijinal ilanı kontrol et.
-            </Text>
-          </DetailSection>
-        ) : null}
+        <DescriptionSection job={job} />
+        <RequirementsSection job={job} />
 
         <DetailSection title="Başvuru">
           <ApplicationFacts job={job} />
@@ -173,6 +117,89 @@ export default function JobDetailScreen() {
         }}
       />
     </View>
+  );
+}
+
+function JobHeader({ job, duplicateCount }: Readonly<{ job: JobPosting; duplicateCount: number }>) {
+  const facts = detailFacts(job);
+  const published = job.publishedAt ? formatLongDate(job.publishedAt) : null;
+  return (
+    <View style={styles.head}>
+      <Text variant="headline" selectable>
+        {displayTitle(job.title, job.organization)}
+      </Text>
+      {job.organization ? (
+        <Text variant="bodyStrong" tone="secondary" selectable>
+          {displayOrganization(job.organization)}
+        </Text>
+      ) : null}
+      <Text variant="meta" tone="tertiary">
+        {[locationLine(job) || 'Konum belirtilmemiş', published].filter(Boolean).join(' · ')}
+      </Text>
+      <Text variant="meta" tone="tertiary">
+        Kaynak: {sourceDisplayName(job.sourceId)}
+        {duplicateCount ? ` · ayrıca ${duplicateCount} kaynakta daha bulundu` : ''}
+      </Text>
+      <DeadlineRow deadlineIso={job.applicationDeadline} />
+      {facts.length ? (
+        <Text variant="meta" tone="secondary" style={styles.facts}>
+          {facts.join('  ·  ')}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+function DeadlineRow({ deadlineIso }: Readonly<{ deadlineIso: string | null }>) {
+  const c = useColors();
+  const deadline = deadlineInfo(deadlineIso);
+  if (!deadline) return null;
+  const expired = deadline.label === 'Süresi doldu';
+  const showRelative = !expired && !deadline.label.startsWith('Son başvuru');
+  return (
+    <View style={styles.deadline}>
+      <Icon name="clock" size={16} color={deadline.urgent ? c.critical : c.textSecondary} />
+      <Text variant="bodyStrong" tone={deadline.urgent ? 'critical' : 'primary'}>
+        {expired ? 'Başvuru süresi doldu' : `Son başvuru ${formatLongDate(deadlineIso)}`}
+      </Text>
+      {showRelative ? (
+        <Text variant="meta" tone={deadline.urgent ? 'critical' : 'secondary'}>
+          · {deadline.label}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+function DescriptionSection({ job }: Readonly<{ job: JobPosting }>) {
+  const missingText = job.detailFetchedAt
+    ? 'Kaynak ilan metni sunmuyor.'
+    : 'Bu kaynakta yalnızca özet bilgi var. Ayrıntılar için orijinal ilanı aç.';
+  return (
+    <DetailSection title="İlan metni">
+      {job.description ? (
+        <LongText text={job.description} />
+      ) : (
+        <Text variant="meta" tone="tertiary">
+          {missingText}
+        </Text>
+      )}
+    </DetailSection>
+  );
+}
+
+function RequirementsSection({ job }: Readonly<{ job: JobPosting }>) {
+  const requirements = requirementFacts(job);
+  if (!requirements.length) return null;
+  return (
+    <DetailSection title="Şartlar">
+      {requirements.map((f) => (
+        <Fact key={f.label} label={f.label} value={f.value} />
+      ))}
+      <Text variant="caption" tone="tertiary" style={{ marginTop: space.xs }}>
+        İlan metninden otomatik çıkarıldı. Başvurmadan önce orijinal ilanı kontrol et.
+      </Text>
+    </DetailSection>
   );
 }
 

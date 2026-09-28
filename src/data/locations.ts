@@ -112,47 +112,56 @@ export interface LocationGuess {
  * ilçe adı aranır ("Çeltik Belediye Başkanlığı" → Konya / Çeltik).
  * Birden fazla farklı il geçiyorsa konum belirsiz kabul edilir (null).
  */
-export function guessLocation(...texts: (string | null | undefined)[]): LocationGuess {
-  const none: LocationGuess = { city: null, district: null, plate: null };
-  for (const text of texts) {
-    const n = normalizeTr(text);
-    if (!n) continue;
-    const hinted = organizationHint(n);
-    if (hinted) return { city: hinted.name, district: null, plate: hinted.plate };
-    const tokens = n.split(' ');
+const NO_LOCATION: LocationGuess = { city: null, district: null, plate: null };
 
-    const provinces = new Set<Province>();
-    for (let i = 0; i < tokens.length; i++) {
-      const one = provinceByNormalized.get(tokens[i]);
-      if (one) provinces.add(one);
-      if (i + 1 < tokens.length) {
-        const two = provinceByNormalized.get(`${tokens[i]} ${tokens[i + 1]}`);
-        if (two) provinces.add(two);
-      }
-    }
+function provincesIn(tokens: string[]): Set<Province> {
+  const provinces = new Set<Province>();
+  for (let i = 0; i < tokens.length; i++) {
+    const one = provinceByNormalized.get(tokens[i]);
+    if (one) provinces.add(one);
+    const two = i + 1 < tokens.length ? provinceByNormalized.get(`${tokens[i]} ${tokens[i + 1]}`) : undefined;
+    if (two) provinces.add(two);
+  }
+  return provinces;
+}
 
-    const districtHits: { plate: number; name: string }[] = [];
-    for (let i = 0; i < tokens.length; i++) {
-      for (const len of [1, 2]) {
-        if (i + len > tokens.length) continue;
-        const hits = districtIndex.get(tokens.slice(i, i + len).join(' '));
-        if (hits) districtHits.push(...hits);
-      }
-    }
-
-    if (provinces.size === 1) {
-      const [p] = [...provinces];
-      const d = districtHits.find((h) => h.plate === p.plate);
-      return { city: p.name, district: d?.name ?? null, plate: p.plate };
-    }
-    if (provinces.size > 1) return none;
-
-    const uniqueDistricts = districtHits.filter((h) => districtIndex.get(normalizeTr(h.name))?.length === 1);
-    const plates = new Set(uniqueDistricts.map((h) => h.plate));
-    if (plates.size === 1) {
-      const h = uniqueDistricts[0];
-      return { city: byPlate.get(h.plate)?.name ?? null, district: h.name, plate: h.plate };
+function districtHitsIn(tokens: string[]): { plate: number; name: string }[] {
+  const hits: { plate: number; name: string }[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    for (const len of [1, 2].filter((l) => i + l <= tokens.length)) {
+      hits.push(...(districtIndex.get(tokens.slice(i, i + len).join(' ')) ?? []));
     }
   }
-  return none;
+  return hits;
+}
+
+/** Tek metin için tahmin; `undefined` sonraki metne geçilmesi gerektiğini belirtir. */
+function guessFromText(n: string): LocationGuess | undefined {
+  const hinted = organizationHint(n);
+  if (hinted) return { city: hinted.name, district: null, plate: hinted.plate };
+  const tokens = n.split(' ');
+  const provinces = provincesIn(tokens);
+  const districtHits = districtHitsIn(tokens);
+
+  if (provinces.size > 1) return NO_LOCATION;
+  if (provinces.size === 1) {
+    const [p] = [...provinces];
+    const d = districtHits.find((h) => h.plate === p.plate);
+    return { city: p.name, district: d?.name ?? null, plate: p.plate };
+  }
+
+  const uniqueDistricts = districtHits.filter((h) => districtIndex.get(normalizeTr(h.name))?.length === 1);
+  const plates = new Set(uniqueDistricts.map((h) => h.plate));
+  if (plates.size !== 1) return undefined;
+  const h = uniqueDistricts[0];
+  return { city: byPlate.get(h.plate)?.name ?? null, district: h.name, plate: h.plate };
+}
+
+export function guessLocation(...texts: (string | null | undefined)[]): LocationGuess {
+  for (const text of texts) {
+    const n = normalizeTr(text);
+    const guess = n ? guessFromText(n) : undefined;
+    if (guess) return guess;
+  }
+  return NO_LOCATION;
 }

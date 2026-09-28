@@ -42,19 +42,20 @@ function isEdevlet(url: string | null): boolean {
   return !!url && /turkiye\.gov\.tr/i.test(url);
 }
 
+function applicationPlatform(method: ApplicationMethod, applicationLink: string | null | undefined): string {
+  if (method === 'eDevlet') return 'e-Devlet / Kariyer Kapısı';
+  const host = applicationLink ? /^https?:\/\/([^/]+)/i.exec(applicationLink)?.[1]?.replace(/^www\./, '') : undefined;
+  if (!host) return 'Kariyer Kapısı';
+  return host.includes('iskur') ? 'İŞKUR' : host;
+}
+
 /** RSS öğesi + detay JSON'u. Detaydaki değerler listedekilerden önceliklidir. */
 export function mapDetail(base: NormalizedJob, d: KariyerKapisiDetail): NormalizedJob {
   const description = d.ilanMetni ? cleanWhitespace(stripBbcode(d.ilanMetni)) : null;
   const applicationUrl = d.basvuruLinki ?? (d.eDevletteGorunsun === 1 ? d.eDevletServisURL : null) ?? base.sourceUrl;
-  let applicationMethod: ApplicationMethod = 'online';
-  if (!d.basvuruLinki && d.eDevletteGorunsun === 1 && isEdevlet(d.eDevletServisURL)) applicationMethod = 'eDevlet';
-
-  let platform = 'Kariyer Kapısı';
-  if (applicationMethod === 'eDevlet') platform = 'e-Devlet / Kariyer Kapısı';
-  else if (d.basvuruLinki) {
-    const host = /^https?:\/\/([^/]+)/i.exec(d.basvuruLinki)?.[1]?.replace(/^www\./, '');
-    if (host) platform = host.includes('iskur') ? 'İŞKUR' : host;
-  }
+  const applicationMethod: ApplicationMethod =
+    !d.basvuruLinki && d.eDevletteGorunsun === 1 && isEdevlet(d.eDevletServisURL) ? 'eDevlet' : 'online';
+  const platform = applicationPlatform(applicationMethod, d.basvuruLinki);
 
   const title = d.ilanBaslik ?? base.title;
   return {

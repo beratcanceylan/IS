@@ -88,24 +88,33 @@ export interface SimilarityResult {
   vetoed: string | null;
 }
 
-export function similarity(a: DedupInput, b: DedupInput): SimilarityResult {
+/** Kesin olarak farklı ilan olduklarını gösteren yapısal alanlar. */
+function structuralVeto(a: DedupInput, b: DedupInput): string | null {
   // Aynı kaynak içindeki kopyalar external id ile çözülür; burada kaynaklar arası bakılır.
-  if (a.sourceId === b.sourceId) return { score: 0, vetoed: 'sameSource' };
-
+  if (a.sourceId === b.sourceId) return 'sameSource';
   const cityA = normalizeTr(a.city);
   const cityB = normalizeTr(b.city);
-  if (cityA && cityB && cityA !== cityB) return { score: 0, vetoed: 'city' };
-  if (a.district && b.district && normalizeTr(a.district) !== normalizeTr(b.district)) {
-    return { score: 0, vetoed: 'district' };
-  }
-  if (a.quota != null && b.quota != null && a.quota !== b.quota) return { score: 0, vetoed: 'quota' };
+  if (cityA && cityB && cityA !== cityB) return 'city';
+  if (a.district && b.district && normalizeTr(a.district) !== normalizeTr(b.district)) return 'district';
+  if (a.quota != null && b.quota != null && a.quota !== b.quota) return 'quota';
+  return null;
+}
 
-  let deadlineScore = 0.5;
-  if (a.applicationDeadline && b.applicationDeadline) {
-    const diffDays = Math.abs(new Date(a.applicationDeadline).getTime() - new Date(b.applicationDeadline).getTime()) / 86_400_000;
-    if (diffDays > 2) return { score: 0, vetoed: 'deadline' };
-    deadlineScore = diffDays < 1 ? 1 : 0.7;
-  }
+/** Son başvuru yakınlığı; iki günden fazla fark varsa `null` (veto). */
+function deadlineScoreOf(a: DedupInput, b: DedupInput): number | null {
+  if (!a.applicationDeadline || !b.applicationDeadline) return 0.5;
+  const diffDays = Math.abs(new Date(a.applicationDeadline).getTime() - new Date(b.applicationDeadline).getTime()) / 86_400_000;
+  if (diffDays > 2) return null;
+  return diffDays < 1 ? 1 : 0.7;
+}
+
+export function similarity(a: DedupInput, b: DedupInput): SimilarityResult {
+  const veto = structuralVeto(a, b);
+  if (veto) return { score: 0, vetoed: veto };
+  const deadlineScore = deadlineScoreOf(a, b);
+  if (deadlineScore === null) return { score: 0, vetoed: 'deadline' };
+  const cityA = normalizeTr(a.city);
+  const cityB = normalizeTr(b.city);
 
   const orgA = normalizeOrganization(a.organization).split(' ').filter(Boolean);
   const orgB = normalizeOrganization(b.organization).split(' ').filter(Boolean);

@@ -43,25 +43,30 @@ export function parseTimeline(html: string): KamuilanItem[] {
     if (!day || !month) continue;
     const dayLabel = `${clean(textContent(day))} ${clean(textContent(month))}`;
     for (const a of selectAll<AnyNode, Element>(SELECTORS.listing, group)) {
-      const orgEl = selectOne(SELECTORS.organization, a);
-      const titleEl = selectOne(SELECTORS.title, a);
-      if (!orgEl || !titleEl) continue;
-      const rangeEl = selectOne(SELECTORS.applicationRange, a);
-      const rangeRaw = rangeEl ? clean(textContent(rangeEl)) : '';
-      const fullTitle = clean(textContent(titleEl));
-      const title = rangeRaw ? clean(fullTitle.replace(rangeRaw, '')) : fullTitle;
-      const organization = clean(textContent(orgEl));
-      if (!organization || !title) continue;
-      const logo = selectOne<AnyNode, Element>(SELECTORS.logo, a)?.attribs.src ?? null;
-      out.push({
-        dayLabel,
-        organization,
-        title,
-        rangeText: rangeRaw.replaceAll(/[()]/g, '').trim() || null,
-        href: a.attribs.href ?? null,
-        logo: logo ? logo.split('#')[0] : null,
-      });
+      const item = parseListing(a, dayLabel);
+      if (item) out.push(item);
     }
   }
   return out;
+}
+
+function parseListing(a: Element, dayLabel: string): KamuilanItem | null {
+  const orgEl = selectOne(SELECTORS.organization, a);
+  const titleEl = selectOne(SELECTORS.title, a);
+  if (!orgEl || !titleEl) return null;
+  const rangeEl = selectOne(SELECTORS.applicationRange, a);
+  const rangeRaw = rangeEl ? clean(textContent(rangeEl)) : '';
+  const fullTitle = clean(textContent(titleEl));
+  const title = rangeRaw ? clean(fullTitle.replace(rangeRaw, '')) : fullTitle;
+  const organization = clean(textContent(orgEl));
+  if (!organization || !title) return null;
+  const logo = selectOne<AnyNode, Element>(SELECTORS.logo, a)?.attribs.src ?? null;
+  return {
+    dayLabel,
+    organization,
+    title,
+    rangeText: rangeRaw.replaceAll(/[()]/g, '').trim() || null,
+    href: a.attribs.href ?? null,
+    logo: logo ? logo.split('#')[0] : null,
+  };
 }
