@@ -181,7 +181,7 @@ export function jobContentColumns(job: NormalizedJob, derived: { organizationNor
     experience_years_min: job.experienceYearsMin,
     age_min: job.ageMin,
     age_max: job.ageMax,
-    kpss_required: job.kpssRequired === null ? null : job.kpssRequired ? 1 : 0,
+    kpss_required: job.kpssRequired === null ? null : Number(job.kpssRequired),
     kpss_score_types: encodeList(job.kpssScoreTypes),
     kpss_min_score: job.kpssMinimumScore,
     kpss_year: job.kpssYear,

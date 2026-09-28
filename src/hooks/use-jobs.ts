@@ -46,11 +46,11 @@ function useInvalidatePersonal() {
 export function useJobActions() {
   const invalidate = useInvalidatePersonal();
   const favorite = useMutation({
-    mutationFn: ({ id, value }: { id: number; value: boolean }) => service.toggleFavorite(id, value),
+    mutationFn: ({ id, value }: { id: number; value: boolean }) => (value ? service.addFavorite(id) : service.removeFavorite(id)),
     onSuccess: (_d, v) => invalidate(v.id),
   });
   const hide = useMutation({
-    mutationFn: ({ id, value }: { id: number; value: boolean }) => service.setHidden(id, value),
+    mutationFn: ({ id, value }: { id: number; value: boolean }) => (value ? service.hideJob(id) : service.unhideJob(id)),
     onSuccess: (_d, v) => invalidate(v.id),
   });
   const status = useMutation({

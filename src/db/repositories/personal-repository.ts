@@ -5,20 +5,20 @@ import { JOB_LIST_COLUMNS, rowToListItem, type JobListRow } from './job-rows';
 
 /** Favori, gizleme, başvuru durumu, not ve hatırlatıcılar. Hepsi yalnızca cihazda. */
 
-export async function setFavorite(db: Db, jobId: number, favorite: boolean, now: string): Promise<void> {
-  if (favorite) {
-    await db.runAsync('INSERT OR IGNORE INTO favorites (job_id, created_at) VALUES (?, ?)', [jobId, now]);
-  } else {
-    await db.runAsync('DELETE FROM favorites WHERE job_id = ?', [jobId]);
-  }
+export async function addFavorite(db: Db, jobId: number, now: string): Promise<void> {
+  await db.runAsync('INSERT OR IGNORE INTO favorites (job_id, created_at) VALUES (?, ?)', [jobId, now]);
 }
 
-export async function setHidden(db: Db, jobId: number, hidden: boolean, now: string): Promise<void> {
-  if (hidden) {
-    await db.runAsync('INSERT OR IGNORE INTO hidden_jobs (job_id, created_at) VALUES (?, ?)', [jobId, now]);
-  } else {
-    await db.runAsync('DELETE FROM hidden_jobs WHERE job_id = ?', [jobId]);
-  }
+export async function removeFavorite(db: Db, jobId: number): Promise<void> {
+  await db.runAsync('DELETE FROM favorites WHERE job_id = ?', [jobId]);
+}
+
+export async function hideJob(db: Db, jobId: number, now: string): Promise<void> {
+  await db.runAsync('INSERT OR IGNORE INTO hidden_jobs (job_id, created_at) VALUES (?, ?)', [jobId, now]);
+}
+
+export async function unhideJob(db: Db, jobId: number): Promise<void> {
+  await db.runAsync('DELETE FROM hidden_jobs WHERE job_id = ?', [jobId]);
 }
 
 export interface PersonalState {

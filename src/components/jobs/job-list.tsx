@@ -15,19 +15,27 @@ import { JobRow } from './job-row';
 type ListRow = { kind: 'header'; key: string; label: string } | { kind: 'job'; key: string; job: JobListItem };
 
 /** Akışı "Yeni / Bugün / Daha eski" bölümlerine ayırır. Sıralama DB'den gelir, burada değişmez. */
+type Section = 'new' | 'today' | 'older';
+
+function sectionOf(job: JobListItem, now: Date): Section {
+  if (job.isNew) return 'new';
+  return calendarDaysFrom(job.sortAt, now) >= 0 ? 'today' : 'older';
+}
+
+function sectionLabel(section: Section, items: JobListItem[], newCount: number | undefined): string {
+  if (section === 'new') return `Yeni · ${formatCount(newCount ?? items.filter((j) => j.isNew).length)}`;
+  return section === 'today' ? 'Bugün' : 'Daha eski';
+}
+
 export function sectionRows(items: JobListItem[], newCount: number | undefined, now = new Date()): ListRow[] {
   const rows: ListRow[] = [];
-  const seen = new Set<string>();
+  const seen = new Set<Section>();
   for (const job of items) {
-    let section: string;
-    if (job.isNew) section = 'new';
-    else section = calendarDaysFrom(job.sortAt, now) >= 0 ? 'today' : 'older';
+    const section = sectionOf(job, now);
     // Her bölüm başlığı bir kez; sıralama DB'den geldiği için normalde bölümler ardışıktır.
     if (!seen.has(section)) {
       seen.add(section);
-      const label =
-        section === 'new' ? `Yeni · ${formatCount(newCount ?? items.filter((j) => j.isNew).length)}` : section === 'today' ? 'Bugün' : 'Daha eski';
-      rows.push({ kind: 'header', key: `h-${section}`, label });
+      rows.push({ kind: 'header', key: `h-${section}`, label: sectionLabel(section, items, newCount) });
     }
     rows.push({ kind: 'job', key: String(job.id), job });
   }

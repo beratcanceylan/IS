@@ -19,12 +19,28 @@ const SECTORS = [
   { value: 'private', label: 'Özel' },
 ] as const;
 
+function applyLabel(count: number | undefined): string {
+  if (count === undefined) return 'Göster';
+  if (count === 0) return 'İlan yok';
+  return `${formatCount(count)} ilanı göster`;
+}
+
+function CloseHeaderButton() {
+  const router = useRouter();
+  return <Button kind="plain" label="Kapat" onPress={() => router.back()} />;
+}
+
+function ResetHeaderButton() {
+  const { setDraft } = useFilterDraft();
+  return <Button kind="plain" label="Sıfırla" onPress={() => setDraft({})} />;
+}
+
 export default function FiltersScreen() {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { update } = useSettings();
-  const { draft, setDraft, patch } = useFilterDraft();
+  const { draft, patch } = useFilterDraft();
   const count = useFeedCount(draft);
   const s = filterSummaries(draft);
   const go = (category: FilterCategory) => router.push({ pathname: '/filters/[category]', params: { category } } as Href);
@@ -38,8 +54,8 @@ export default function FiltersScreen() {
     <View style={[styles.flex, { backgroundColor: c.background }]}>
       <Stack.Screen
         options={{
-          headerLeft: () => <Button kind="plain" label="Kapat" onPress={() => router.back()} />,
-          headerRight: () => <Button kind="plain" label="Sıfırla" onPress={() => setDraft({})} />,
+          headerLeft: CloseHeaderButton,
+          headerRight: ResetHeaderButton,
         }}
       />
       <ScrollView contentContainerStyle={{ paddingBottom: space.xxxl }}>
@@ -89,7 +105,7 @@ export default function FiltersScreen() {
       </ScrollView>
 
       <View style={[styles.footer, { borderTopColor: c.separator, paddingBottom: insets.bottom + space.s }]}>
-        <Button label={count.data === undefined ? 'Göster' : count.data === 0 ? 'İlan yok' : `${formatCount(count.data)} ilanı göster`} onPress={apply} flex />
+        <Button label={applyLabel(count.data)} onPress={apply} flex />
       </View>
     </View>
   );

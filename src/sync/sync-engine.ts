@@ -301,6 +301,9 @@ async function fetchDetails(
 }
 
 function describeError(error: unknown): string {
-  if (error instanceof Error) return `${error.name === 'Error' ? '' : `${error.name}: `}${error.message}`;
+  if (error instanceof Error) {
+    const prefix = error.name === 'Error' ? '' : `${error.name}: `;
+    return prefix + error.message;
+  }
   return String(error);
 }

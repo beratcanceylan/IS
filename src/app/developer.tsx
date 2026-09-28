@@ -16,6 +16,11 @@ import { useColors } from '@/theme/use-theme';
 import { formatDateTime } from '@/utils/dates';
 import { formatCount } from '@/utils/display';
 
+function formatSyncSource(s: { sourceId: string; outcome: string; error?: string | null }): string {
+  const error = s.error ? ` (${s.error})` : '';
+  return `${s.sourceId}: ${s.outcome}${error}`;
+}
+
 export default function DeveloperScreen() {
   const c = useColors();
   const qc = useQueryClient();
@@ -71,7 +76,7 @@ export default function DeveloperScreen() {
           disabled={!!busy}
           onPress={() => void run('Senkron', async () => {
             const r = await requestSync('manual', { force: true });
-            return r ? r.sources.map((s) => `${s.sourceId}: ${s.outcome}${s.error ? ` (${s.error})` : ''}`).join('\n') : 'Başarısız';
+            return r ? r.sources.map(formatSyncSource).join('\n') : 'Başarısız';
           })}
         />
         <Button

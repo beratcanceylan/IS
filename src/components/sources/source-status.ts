@@ -39,5 +39,7 @@ export function problemSummary(h: SourceHealthRecord | null): string | null {
   if (!h || !isProblem(h)) return null;
   if (h.status === 'degraded') return h.warning;
   const today = h.lastAttemptAt ? calendarDaysFrom(h.lastAttemptAt) === 0 : false;
-  return `${today ? 'Bugün' : 'Son denemede'} güncellenemedi${h.lastError ? `: ${h.lastError}` : ''}`;
+  const when = today ? 'Bugün' : 'Son denemede';
+  const detail = h.lastError ? `: ${h.lastError}` : '';
+  return `${when} güncellenemedi${detail}`;
 }

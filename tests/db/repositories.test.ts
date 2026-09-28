@@ -9,7 +9,7 @@ import {
   queryFeed,
   upsertJob,
 } from '@/db/repositories/jobs-repository';
-import { getPersonalState, listSaved, setFavorite, setHidden, setNote, setStatus } from '@/db/repositories/personal-repository';
+import { addFavorite, getPersonalState, hideJob, listSaved, setNote, setStatus } from '@/db/repositories/personal-repository';
 import { getSetting, setSetting } from '@/db/repositories/settings-repository';
 import type { JobFilter } from '@/domain/saved-search';
 
@@ -94,7 +94,7 @@ describe('yaşam döngüsü', () => {
     const db = await createMigratedDb();
     const fav = await upsertJob(db, makeJob(), { now: '2026-01-01T00:00:00.000Z', baseline: false });
     const plain = await upsertJob(db, makeJob(), { now: '2026-01-01T00:00:00.000Z', baseline: false });
-    await setFavorite(db, fav.id, true, NOW);
+    await addFavorite(db, fav.id, NOW);
     await markMissingAsPossiblyRemoved(db, 'test-source', NOW);
     await applyLifecycleRules(db, new Date(NOW));
     expect((await getJob(db, fav.id))?.lifecycle).toBe('possiblyRemoved');
@@ -171,7 +171,7 @@ describe('queryFeed filtreleri', () => {
 
   it('gizlenen ilan akışta görünmez', async () => {
     const { db, ids } = await seed();
-    await setHidden(db, ids.istanbulPrivate, true, NOW);
+    await hideJob(db, ids.istanbulPrivate, NOW);
     expect((await feed(db)).map((j) => j.id)).not.toContain(ids.istanbulPrivate);
   });
 
@@ -260,7 +260,7 @@ describe('kişisel veri', () => {
     await setStatus(db, id, 'applied', '2026-09-26T10:00:00.000Z');
     await setStatus(db, id, 'interview', '2026-10-01T10:00:00.000Z');
     await setNote(db, id, '  CV güncelle  ', NOW);
-    await setFavorite(db, id, true, NOW);
+    await addFavorite(db, id, NOW);
     const state = await getPersonalState(db, id);
     expect(state).toMatchObject({ status: 'interview', appliedAt: '2026-09-26T10:00:00.000Z', note: 'CV güncelle', isFavorite: true });
     expect((await listSaved(db, 'favorites')).map((j) => j.id)).toEqual([id]);

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Children, isValidElement, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { GUTTER, HIT, space } from '@/theme/tokens';
@@ -68,11 +68,11 @@ export function Row({ label, value, detail, onPress, chevron = !!onPress, right,
 /** Gruplanmış satırlar: arada ayraç, üst/alt kenarda ince çizgi. Kart değil. */
 export function Group({ children }: Readonly<{ children: ReactNode[] | ReactNode }>) {
   const c = useColors();
-  const items = (Array.isArray(children) ? children : [children]).filter(Boolean);
+  const items = Children.toArray(children);
   return (
     <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: c.separator }}>
       {items.map((child, i) => (
-        <View key={i}>
+        <View key={isValidElement(child) ? child.key : String(child)}>
           {i > 0 ? (
             <View style={{ backgroundColor: c.surface }}>
               <Separator />

@@ -12,6 +12,12 @@ import { foldTr } from '@/utils/turkish-normalization';
 
 type Row = { kind: 'all' } | { kind: 'province'; p: Province } | { kind: 'district'; p: Province; name: string };
 
+function rowKey(r: Row): string {
+  if (r.kind === 'all') return 'all';
+  if (r.kind === 'province') return `p${r.p.plate}`;
+  return `d${r.p.plate}-${r.name}`;
+}
+
 /**
  * İl / ilçe seçimi. Boş seçim "Tüm Türkiye" demektir. Seçili ilin altında ilçeler açılabilir;
  * hiç ilçe seçilmemişse ilin tamamı kastedilir. GPS kullanılmaz.
@@ -69,7 +75,7 @@ export function ProvincePicker({
   return (
     <FlatList
       data={rows}
-      keyExtractor={(r) => (r.kind === 'all' ? 'all' : r.kind === 'province' ? `p${r.p.plate}` : `d${r.p.plate}-${r.name}`)}
+      keyExtractor={rowKey}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
       ListHeaderComponent={
@@ -88,7 +94,7 @@ export function ProvincePicker({
           </View>
         </View>
       }
-      ItemSeparatorComponent={() => <Separator />}
+      ItemSeparatorComponent={Separator}
       renderItem={({ item }) => {
         if (item.kind === 'all') {
           return <CheckRow label="Tüm Türkiye" checked={value.length === 0} onPress={() => onChange([])} />;

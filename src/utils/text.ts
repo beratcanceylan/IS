@@ -71,8 +71,9 @@ export function truncate(input: string, max: number): string {
 /** Deterministik, hızlı 32-bit FNV-1a özeti (hex). Kriptografik değildir; kimlik üretmek için yeterli. */
 export function fnv1a(input: string): string {
   let hash = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i);
+  // split('') UTF-16 kod birimlerine böler; mevcut kimliklerin değişmemesi için bu korunmalı.
+  for (const unit of input.split('')) {
+    hash ^= unit.codePointAt(0) ?? 0;
     hash = Math.imul(hash, 0x01000193);
   }
   return (hash >>> 0).toString(16).padStart(8, '0');

@@ -16,6 +16,11 @@ import { normalizeTr } from '@/utils/turkish-normalization';
 const EPOCH = '1970-01-01T00:00:00.000Z';
 const MAX_RECENT = 8;
 
+function resultCountLabel(count: number, hasMore: boolean): string {
+  if (count === 0) return '';
+  return hasMore ? `${count}+ sonuç` : `${count} sonuç`;
+}
+
 function useDebounced<T>(value: T, ms: number): T {
   const [v, setV] = useState(value);
   useEffect(() => {
@@ -66,7 +71,7 @@ export default function SearchScreen() {
       </View>
       {query && !results.isLoading ? (
         <Text variant="caption" tone="tertiary">
-          {items.length === 0 ? '' : results.hasNextPage ? `${items.length}+ sonuç` : `${items.length} sonuç`}
+          {resultCountLabel(items.length, results.hasNextPage)}
         </Text>
       ) : null}
     </View>

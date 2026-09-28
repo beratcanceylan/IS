@@ -104,6 +104,11 @@ export function IconButton({
   );
 }
 
+function buttonOpacity(disabled: boolean | undefined, pressed: boolean): number {
+  if (disabled) return 0.4;
+  return pressed ? 0.75 : 1;
+}
+
 export function Button({
   label,
   onPress,
@@ -120,8 +125,12 @@ export function Button({
   flex?: boolean;
 }>) {
   const c = useColors();
-  const bg = kind === 'primary' ? c.accent : kind === 'secondary' ? c.badge : 'transparent';
-  const fg = kind === 'primary' ? c.onAccent : kind === 'secondary' ? c.text : c.accent;
+  const palette = {
+    primary: { bg: c.accent, fg: c.onAccent },
+    secondary: { bg: c.badge, fg: c.text },
+    plain: { bg: 'transparent', fg: c.accent },
+  } as const;
+  const { bg, fg } = palette[kind];
   return (
     <Pressable
       onPress={onPress}
@@ -129,7 +138,7 @@ export function Button({
       accessibilityRole="button"
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: bg, opacity: disabled ? 0.4 : pressed ? 0.75 : 1 },
+        { backgroundColor: bg, opacity: buttonOpacity(disabled, pressed) },
         flex && { flex: 1 },
       ]}>
       {icon ? <Icon name={icon} size={18} color={fg} /> : null}

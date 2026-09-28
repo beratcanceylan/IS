@@ -47,12 +47,20 @@ export async function markViewed(id: number) {
   await jobs.markViewed(await getDb(), id, nowIso());
 }
 
-export async function toggleFavorite(id: number, favorite: boolean) {
-  await personal.setFavorite(await getDb(), id, favorite, nowIso());
+export async function addFavorite(id: number) {
+  await personal.addFavorite(await getDb(), id, nowIso());
 }
 
-export async function setHidden(id: number, hidden: boolean) {
-  await personal.setHidden(await getDb(), id, hidden, nowIso());
+export async function removeFavorite(id: number) {
+  await personal.removeFavorite(await getDb(), id);
+}
+
+export async function hideJob(id: number) {
+  await personal.hideJob(await getDb(), id, nowIso());
+}
+
+export async function unhideJob(id: number) {
+  await personal.unhideJob(await getDb(), id);
 }
 
 export async function setStatus(id: number, status: PersonalStatus | null) {
