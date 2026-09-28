@@ -23,7 +23,7 @@ jobs:
           cache: npm
 
       - run: npm ci --ignore-scripts
-      - run: npx jest --coverage --coverageReporters=lcov
+      - run: npm test -- --coverage --coverageReporters=lcov
 
       - uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2.2
         env:

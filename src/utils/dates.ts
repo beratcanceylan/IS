@@ -266,6 +266,27 @@ export interface DateRange {
  * "21 Eylül - 30 Eylül", "28 Aralık - 5 Ocak", "01.10.2026 - 15.10.2026" gibi aralıkları çözer.
  * Başlangıç yılı referansa göre çıkarılır; bitiş başlangıçtan önce kalıyorsa bir yıl ileri alınır.
  */
+const isSpace = (ch: string | undefined) => ch !== undefined && /\s/.test(ch);
+
+/** Önünde ve arkasında boşluk olan tirelerden böler (`/\s+[-–—]\s+/` ile aynı, doğrusal zamanda). */
+function splitAtSpacedDash(text: string): string[] {
+  const parts: string[] = [];
+  let start = 0;
+  for (let i = 1; i < text.length - 1; i++) {
+    if (!'-–—'.includes(text[i]) || !isSpace(text[i - 1]) || !isSpace(text[i + 1])) continue;
+    let from = i - 1;
+    while (from > start && isSpace(text[from - 1])) from--;
+    if (from < start) continue;
+    let to = i + 1;
+    while (isSpace(text[to])) to++;
+    parts.push(text.slice(start, from));
+    start = to;
+    i = to - 1;
+  }
+  parts.push(text.slice(start));
+  return parts;
+}
+
 /** Yıldan sonra ya da ay adıyla rakam arasında kalan tirelerden böler. */
 function splitAtRangeDash(text: string): string[] {
   const parts: string[] = [];
@@ -288,7 +309,7 @@ export function parseDateRange(text: string | null | undefined, reference: Date 
   const cleaned = text.replaceAll(/[()]/g, ' ').trim();
   // Önce boşluklu ayraç ("21 Eylül - 30 Eylül"); yoksa yalnızca yıl ya da ay adından sonra gelen tire
   // ("01.10.2026-15.10.2026", "21 Eylül-30 Eylül"). "25-09-2026" içindeki tireler bölünmez.
-  let parts = cleaned.split(/\s+[-–—]\s+/);
+  let parts = splitAtSpacedDash(cleaned);
   if (parts.length < 2) parts = splitAtRangeDash(cleaned);
   parts = parts.map((p) => p.trim()).filter(Boolean);
   if (parts.length < 2) return { start: null, end: null };

@@ -72,7 +72,7 @@ export function Group({ children }: Readonly<{ children: ReactNode[] | ReactNode
   return (
     <View style={{ borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: c.separator }}>
       {items.map((child, i) => (
-        <View key={isValidElement(child) ? child.key : String(child)}>
+        <View key={isValidElement(child) ? child.key : JSON.stringify(child)}>
           {i > 0 ? (
             <View style={{ backgroundColor: c.surface }}>
               <Separator />

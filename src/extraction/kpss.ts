@@ -18,7 +18,7 @@ const NEGATIVE_SUBJECT = String.raw`KPSS\s*(?:\(?[A-Z]\)?\s*grubu\s*)?(?:puan\p{
 const NEGATIVE_CONDITION = String.raw`(?:şart|koşul)\p{L}*\s*(?:(?:aranma|bulunma|yok)\p{L}*|olmaksızın)`;
 const NEGATIVE = [
   new RegExp(NEGATIVE_SUBJECT + NEGATIVE_CONDITION, 'iu'),
-  /KPSS['’]?s(?:i|ı)z/iu,
+  /KPSS['’]?(?:siz|sız)/iu,
   /KPSS\s*(?:puanı|belgesi|sonucu)\s*(?:istenme|aranma)\p{L}*/iu,
 ];
 

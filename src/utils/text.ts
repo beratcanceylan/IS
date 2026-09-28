@@ -23,7 +23,7 @@ const NAMED_ENTITIES: Record<string, string> = {
 export function decodeHtmlEntities(input: string): string {
   return input.replaceAll(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, body: string) => {
     if (body.startsWith('#')) {
-      const code = body[1] === 'x' || body[1] === 'X' ? Number.parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
+      const code = body[1] === 'x' || body[1] === 'X' ? Number.parseInt(body.slice(2), 16) : Number.parseInt(body.slice(1), 10);
       return Number.isFinite(code) ? String.fromCodePoint(code) : match;
     }
     return NAMED_ENTITIES[body] ?? match;
@@ -58,14 +58,34 @@ const BBCODE_TAGS = new Set([
 ]);
 
 /** Değişiklik kalmayana kadar uygular; iç içe/bölünmüş etiketler de temizlenir. */
-function replaceUntilStable(input: string, pattern: RegExp, replacement: string): string {
+function untilStable(input: string, transform: (value: string) => string): string {
   let previous: string;
   let current = input;
   do {
     previous = current;
-    current = current.replace(pattern, replacement);
+    current = transform(current);
   } while (current !== previous);
   return current;
+}
+
+/** `<` ile sonraki `>` arasını (en az bir karakter varsa) siler; `/<[^>]+>/g` ile aynı, doğrusal zamanda. */
+function removeTags(input: string): string {
+  let out = '';
+  let i = 0;
+  while (i < input.length) {
+    const open = input.indexOf('<', i);
+    if (open === -1) break;
+    const close = input.indexOf('>', open + 1);
+    if (close === -1) break;
+    if (close === open + 1) {
+      out += input.slice(i, open + 1);
+      i = open + 1;
+      continue;
+    }
+    out += input.slice(i, open);
+    i = close + 1;
+  }
+  return out + input.slice(i);
 }
 
 const BLOCK_OPEN = /<(script|style)/gi;
@@ -92,12 +112,11 @@ function removeScriptAndStyle(input: string): string {
 
 export function stripHtml(input: string): string {
   return decodeHtmlEntities(
-    replaceUntilStable(
+    untilStable(
       removeScriptAndStyle(input)
         .replaceAll(/<br\s*\/?>/gi, '\n')
         .replaceAll(/<\/(p|div|li|tr|h\d)>/gi, '\n'),
-      /<[^>]+>/g,
-      '',
+      removeTags,
     ),
   );
 }
