@@ -36,7 +36,8 @@ export function cleanWhitespace(input: string): string {
     .replaceAll(' ', ' ')
     .replaceAll(/\r\n?/g, '\n')
     .replaceAll(/[ \t\f\v]+/g, ' ')
-    .replaceAll(/ *\n */g, '\n')
+    // Önceki adım boşluk dizilerini teke indirdiği için satır başı/sonunda en fazla bir boşluk kalır.
+    .replaceAll(/ ?\n ?/g, '\n')
     .replaceAll(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -48,16 +49,56 @@ export function stripBbcode(input: string): string {
       label.trim() && label.trim() !== url.trim() ? `${label} (${url})` : url,
     )
     .replaceAll('[*]', '• ')
-    .replaceAll(/\[\/?(?:b|i|u|s|size|color|justify|center|left|right|font|list|quote|table|tr|td|th|img|sub|sup|hr|url)(?:=[^\]]*)?\]/gi, '');
+    .replaceAll(/\[\/?([a-z]+)(?:=[^\]]*)?\]/gi, (tag, name: string) => (BBCODE_TAGS.has(name.toLowerCase()) ? '' : tag));
+}
+
+const BBCODE_TAGS = new Set([
+  'b', 'i', 'u', 's', 'size', 'color', 'justify', 'center', 'left', 'right', 'font',
+  'list', 'quote', 'table', 'tr', 'td', 'th', 'img', 'sub', 'sup', 'hr', 'url',
+]);
+
+/** Değişiklik kalmayana kadar uygular; iç içe/bölünmüş etiketler de temizlenir. */
+function replaceUntilStable(input: string, pattern: RegExp, replacement: string): string {
+  let previous: string;
+  let current = input;
+  do {
+    previous = current;
+    current = current.replace(pattern, replacement);
+  } while (current !== previous);
+  return current;
+}
+
+const BLOCK_OPEN = /<(script|style)/gi;
+
+/** `<script>…</script>` ve `<style>…</style>` bloklarını içerikleriyle birlikte, soldan sağa atar. */
+function removeScriptAndStyle(input: string): string {
+  let out = '';
+  let from = 0;
+  BLOCK_OPEN.lastIndex = 0;
+  for (let open = BLOCK_OPEN.exec(input); open; open = BLOCK_OPEN.exec(input)) {
+    const close = new RegExp(`</${open[1]}>`, 'gi');
+    close.lastIndex = open.index + open[0].length;
+    const end = close.exec(input);
+    if (!end) {
+      BLOCK_OPEN.lastIndex = open.index + 1;
+      continue;
+    }
+    out += input.slice(from, open.index);
+    from = end.index + end[0].length;
+    BLOCK_OPEN.lastIndex = from;
+  }
+  return out + input.slice(from);
 }
 
 export function stripHtml(input: string): string {
   return decodeHtmlEntities(
-    input
-      .replaceAll(/<(script|style)[\s\S]*?<\/\1>/gi, '')
-      .replaceAll(/<br\s*\/?>/gi, '\n')
-      .replaceAll(/<\/(p|div|li|tr|h\d)>/gi, '\n')
-      .replaceAll(/<[^>]+>/g, ''),
+    replaceUntilStable(
+      removeScriptAndStyle(input)
+        .replaceAll(/<br\s*\/?>/gi, '\n')
+        .replaceAll(/<\/(p|div|li|tr|h\d)>/gi, '\n'),
+      /<[^>]+>/g,
+      '',
+    ),
   );
 }
 

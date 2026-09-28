@@ -13,6 +13,18 @@ const ACRONYMS = new Set([
 ]);
 const LOWER_WORDS = new Set(['ve', 'ile', 'veya', 'için', 'de', 'da', 'ya', 'ki']);
 
+const LEADING_PUNCTUATION = new Set(['(', '"', "'", '“']);
+const TRAILING_PUNCTUATION = new Set([')', '"', "'", '”', ',', '.', ':', ';']);
+
+/** Kelimenin başındaki açılış ve sonundaki kapanış/noktalama işaretlerini atar. */
+function trimPunctuation(word: string): string {
+  let start = 0;
+  let end = word.length;
+  while (start < end && LEADING_PUNCTUATION.has(word[start])) start++;
+  while (end > start && TRAILING_PUNCTUATION.has(word[end - 1])) end--;
+  return word.slice(start, end);
+}
+
 function isMostlyUpper(text: string): boolean {
   const letters = text.match(/\p{L}/gu) ?? [];
   if (letters.length < 4) return false;
@@ -28,7 +40,7 @@ export function displayCase(text: string | null | undefined): string {
     .split(/(\s+)/)
     .map((word, i) => {
       if (/^\s+$/.test(word)) return word;
-      const bare = word.replaceAll(/^[("'“]+|[)"'”,.:;]+$/g, '');
+      const bare = trimPunctuation(word);
       const parenthesizedAbbreviation = /^[A-ZÇĞİÖŞÜ]{2,6}$/.test(bare) && /^\(.*\)[,.]?$/.test(word);
       if (ACRONYMS.has(bare) || /^P\d{1,3}$/.test(bare) || /^\d/.test(bare) || parenthesizedAbbreviation) {
         return word;
@@ -61,5 +73,11 @@ export function displayOrganization(organization: string | null): string {
 
 /** 2148 → "2.148". Intl'e bağımlı değil. */
 export function formatCount(n: number): string {
-  return String(Math.trunc(n)).replaceAll(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const whole = Math.trunc(n);
+  const digits = String(Math.abs(whole));
+  if (!/^\d+$/.test(digits)) return String(whole);
+  const sign = whole < 0 ? '-' : '';
+  const groups: string[] = [];
+  for (let end = digits.length; end > 0; end -= 3) groups.unshift(digits.slice(Math.max(0, end - 3), end));
+  return sign + groups.join('.');
 }

@@ -102,9 +102,34 @@ export interface ParseDateOptions {
   reference?: Date;
 }
 
-const NUMERIC_DATE = /(\d{1,2})\s*[./-]\s*(\d{1,2})\s*[./-]\s*(\d{2,4})(?:\D{1,3}(\d{1,2})[:.](\d{2}))?/;
-const TEXT_DATE = /(\d{1,2})\s+([\p{L}]{3,8})\.?(?:\s+(\d{4}))?(?:[\s,]+(?:saat\s+)?(\d{1,2})[:.](\d{2}))?/u;
-const ISO_LOCAL = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/;
+// Tarih ve hemen ardından gelen isteğe bağlı saat ayrı kalıplarla okunur (sticky `y` ile tarihin bittiği yerden).
+const NUMERIC_DATE = /(\d{1,2})\s*[./-]\s*(\d{1,2})\s*[./-]\s*(\d{2,4})/;
+const NUMERIC_TIME = /\D{1,3}(\d{1,2})[:.](\d{2})/y;
+const TEXT_DATE = /(\d{1,2})\s+(\p{L}{3,8})\.?(?:\s+(\d{4}))?/u;
+const TEXT_TIME = /[\s,]+(?:saat\s+)?(\d{1,2})[:.](\d{2})/uy;
+
+/** `date` eşleşmesinin hemen ardından gelen saati okur. */
+function timeAfter(input: string, date: RegExpExecArray, time: RegExp): [string | undefined, string | undefined] {
+  time.lastIndex = date.index + date[0].length;
+  const m = time.exec(input);
+  return m ? [m[1], m[2]] : [undefined, undefined];
+}
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})/;
+const ISO_TIME = /^(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?(\.\d+)?/;
+const ISO_ZONE = /^(Z|[+-]\d{2}:?\d{2})?$/;
+
+type IsoMatch = [string, string, string, string, string | undefined, string | undefined, string | undefined, string | undefined, string | undefined];
+
+/** ISO_DATE + ISO_TIME + ISO_ZONE; eski tek kalıpla aynı grup sırasını döndürür. */
+function matchIsoLocal(input: string): IsoMatch | null {
+  const date = ISO_DATE.exec(input);
+  if (!date) return null;
+  const rest = input.slice(date[0].length);
+  const time = ISO_TIME.exec(rest);
+  const zone = time && ISO_ZONE.exec(rest.slice(time[0].length));
+  if (!time || !zone) return null;
+  return [input, date[1], date[2], date[3], time[1], time[2], time[3], time[4], zone[1]];
+}
 
 /**
  * Türkçe tarih biçimlerini ISO'ya çevirir:
@@ -125,7 +150,8 @@ export function parseTurkishDate(text: string | null | undefined, opts: ParseDat
     const month = Number(num[2]) - 1;
     const year = normalizeYear(Number(num[3]));
     if (isValidDay(year, month, day)) {
-      return withTime(year, month, day, num[4], num[5], opts.endOfDay);
+      const [hour, minute] = timeAfter(input, num, NUMERIC_TIME);
+      return withTime(year, month, day, hour, minute, opts.endOfDay);
     }
   }
 
@@ -136,7 +162,8 @@ export function parseTurkishDate(text: string | null | undefined, opts: ParseDat
     if (month !== undefined) {
       const year = txt[3] ? Number(txt[3]) : inferYear(month, day, opts.reference ?? new Date());
       if (isValidDay(year, month, day)) {
-        return withTime(year, month, day, txt[4], txt[5], opts.endOfDay);
+        const [hour, minute] = timeAfter(input, txt, TEXT_TIME);
+        return withTime(year, month, day, hour, minute, opts.endOfDay);
       }
     }
   }
@@ -161,7 +188,7 @@ function withTime(
 
 /** "2026-09-21T08:30:00" gibi ofsetsiz değerleri İstanbul saati kabul eder. */
 export function parseIsoLocal(input: string): string | null {
-  const m = ISO_LOCAL.exec(input.trim());
+  const m = matchIsoLocal(input.trim());
   if (!m) return null;
   const [, y, mo, d, h = '0', mi = '0', s = '0', , zone] = m;
   if (zone) {
@@ -175,14 +202,25 @@ export function parseIsoLocal(input: string): string | null {
   return istanbulToIso(year, month, day, Number(h), Number(mi), Number(s));
 }
 
-const RFC822 =
-  /^(?:[A-Za-z]{3},\s*)?(\d{1,2})\s+([A-Za-z]{3})\s+(\d{2,4})\s+(\d{2}):(\d{2})(?::(\d{2}))?\s*([+-]\d{4}|GMT|UTC|Z)?$/;
+const RFC822_DATE = /^(?:[A-Za-z]{3},\s*)?(\d{1,2})\s+([A-Za-z]{3})\s+(\d{2,4})\s+/;
+const RFC822_TIME = /^(\d{2}):(\d{2})(?::(\d{2}))?\s*([+-]\d{4}|GMT|UTC|Z)?$/;
+
+/** RFC822_DATE + RFC822_TIME; eski tek kalıpla aynı grup sırasını döndürür. */
+type Rfc822Match = [string, string, string, string, string, string, string | undefined, string | undefined];
+
+function matchRfc822(input: string): Rfc822Match | null {
+  const date = RFC822_DATE.exec(input);
+  if (!date) return null;
+  const time = RFC822_TIME.exec(input.slice(date[0].length));
+  if (!time) return null;
+  return [date[0] + time[0], date[1], date[2], date[3], time[1], time[2], time[3], time[4]];
+}
 const EN_MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
 /** RSS pubDate (RFC 822): "Mon, 21 Sep 2026 08:30:00 +0300". */
 export function parseRfc822(input: string | null | undefined): string | null {
   if (!input) return null;
-  const m = RFC822.exec(input.trim());
+  const m = matchRfc822(input.trim());
   if (!m) return null;
   const month = EN_MONTHS.indexOf(m[2].toLowerCase());
   if (month < 0) return null;
@@ -228,13 +266,30 @@ export interface DateRange {
  * "21 Eylül - 30 Eylül", "28 Aralık - 5 Ocak", "01.10.2026 - 15.10.2026" gibi aralıkları çözer.
  * Başlangıç yılı referansa göre çıkarılır; bitiş başlangıçtan önce kalıyorsa bir yıl ileri alınır.
  */
+/** Yıldan sonra ya da ay adıyla rakam arasında kalan tirelerden böler. */
+function splitAtRangeDash(text: string): string[] {
+  const parts: string[] = [];
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (!'-–—'.includes(text[i])) continue;
+    const left = text.slice(start, i).trimEnd();
+    const right = text.slice(i + 1).trimStart();
+    if (/\d{4}$/.test(left) || (/\p{L}$/u.test(left) && /^\d/.test(right))) {
+      parts.push(text.slice(start, i));
+      start = i + 1;
+    }
+  }
+  parts.push(text.slice(start));
+  return parts;
+}
+
 export function parseDateRange(text: string | null | undefined, reference: Date = new Date()): DateRange {
   if (!text) return { start: null, end: null };
   const cleaned = text.replaceAll(/[()]/g, ' ').trim();
   // Önce boşluklu ayraç ("21 Eylül - 30 Eylül"); yoksa yalnızca yıl ya da ay adından sonra gelen tire
   // ("01.10.2026-15.10.2026", "21 Eylül-30 Eylül"). "25-09-2026" içindeki tireler bölünmez.
   let parts = cleaned.split(/\s+[-–—]\s+/);
-  if (parts.length < 2) parts = cleaned.split(/(?<=\d{4})\s*[-–—]\s*|(?<=\p{L})\s*[-–—]\s*(?=\d)/u);
+  if (parts.length < 2) parts = splitAtRangeDash(cleaned);
   parts = parts.map((p) => p.trim()).filter(Boolean);
   if (parts.length < 2) return { start: null, end: null };
   const start = parseTurkishDate(parts[0], { reference });

@@ -14,32 +14,40 @@ export interface AgeExtraction {
  * "18-35 yaş arası" → 18..35, "en fazla 30 yaşında" → max 30.
  * "Doldurmamış / gün almamış" ifadeleri o yaşın altı anlamına geldiği için N-1 saklanır.
  */
+const isValidAge = (v: number) => v >= 15 && v <= 70;
+
+/** Eşleşmelerdeki ilk dolu gruptan geçerli yaşları toplar. */
+function agesFrom(n: string, re: RegExp): number[] {
+  const ages: number[] = [];
+  for (const m of n.matchAll(re)) {
+    const v = Number(m.slice(1).find((g) => g !== undefined));
+    if (isValidAge(v)) ages.push(v);
+  }
+  return ages;
+}
+
+function ageRange(n: string): AgeExtraction | null {
+  const range = /(?<!\S)(\d{2}) (?:ile )?(\d{2}) yaş (?:arası|aralığında)/u.exec(n);
+  if (!range) return null;
+  const a = Number(range[1]);
+  const b = Number(range[2]);
+  return isValidAge(a) && isValidAge(b) && a < b ? { min: a, max: b } : null;
+}
+
 export function extractAge(text: string | null | undefined): AgeExtraction {
   const n = normalizeTr(text);
   if (!n.includes('yaş')) return { min: null, max: null };
-  let min: number | null = null;
-  let max: number | null = null;
-  const valid = (v: number) => v >= 15 && v <= 70;
 
-  const range = /(?<!\S)(\d{2}) (?:ile )?(\d{2}) yaş (?:arası|aralığında)/u.exec(n);
-  if (range) {
-    const a = Number(range[1]);
-    const b = Number(range[2]);
-    if (valid(a) && valid(b) && a < b) return { min: a, max: b };
-  }
+  const range = ageRange(n);
+  if (range) return range;
 
-  for (const m of n.matchAll(/(?<!\S)(\d{2}) yaşını (?:doldurmamış|bitirmemiş)|(?<!\S)(\d{2}) yaşından gün almamış|(?<!\S)(\d{2}) yaşından (?:büyük|fazla) olmamak/gu)) {
-    const v = Number(m[1] ?? m[2] ?? m[3]);
-    if (valid(v)) max = max === null ? v - 1 : Math.min(max, v - 1);
-  }
-  for (const m of n.matchAll(/en fazla (\d{2}) yaş/gu)) {
-    const v = Number(m[1]);
-    if (valid(v)) max = max === null ? v : Math.min(max, v);
-  }
-  for (const m of n.matchAll(/(?<!\S)(\d{2}) yaşını (?:tamamlamış|doldurmuş|bitirmiş)|en az (\d{2}) yaş/gu)) {
-    const v = Number(m[1] ?? m[2]);
-    if (valid(v)) min = min === null ? v : Math.max(min, v);
-  }
+  const maxima = [
+    ...agesFrom(n, /(?<!\S)(\d{2}) yaşını (?:doldurmamış|bitirmemiş)|(?<!\S)(\d{2}) yaşından gün almamış|(?<!\S)(\d{2}) yaşından (?:büyük|fazla) olmamak/gu).map((v) => v - 1),
+    ...agesFrom(n, /en fazla (\d{2}) yaş/gu),
+  ];
+  const minima = agesFrom(n, /(?<!\S)(\d{2}) yaşını (?:tamamlamış|doldurmuş|bitirmiş)|en az (\d{2}) yaş/gu);
+  const max = maxima.length ? Math.min(...maxima) : null;
+  const min = minima.length ? Math.max(...minima) : null;
   if (min !== null && max !== null && min > max) return { min: null, max: null };
   return { min, max };
 }
@@ -163,9 +171,14 @@ export function extractWorkModel(...texts: (string | null | undefined)[]): WorkM
 
 export function extractDriverLicense(text: string | null | undefined): string | null {
   const n = normalizeTr(text);
-  const m = /(?<!\S)([a-e][1-2]?|b1|c1|d1|ce|de|g) sınıfı (?:sürücü belgesi|ehliyet)|(?:sürücü belgesi|ehliyet)\p{L}* \(?([a-e][1-2]?|ce|de|g)\)? sınıf/u.exec(n);
+  // İki kalıptan metinde önce geçen kullanılır (tek alternation ile aynı davranış).
+  const classFirst = /(?<!\S)([a-e][1-2]?|b1|c1|d1|ce|de|g) sınıfı (?:sürücü belgesi|ehliyet)/u.exec(n);
+  const licenseFirst = /(?:sürücü belgesi|ehliyet)\p{L}* \(?([a-e][1-2]?|ce|de|g)\)? sınıf/u.exec(n);
+  const m = [classFirst, licenseFirst]
+    .filter((match) => match !== null)
+    .reduce<RegExpExecArray | null>((best, match) => (best === null || match.index < best.index ? match : best), null);
   if (!m) return null;
-  return `${(m[1] ?? m[2]).toUpperCase()} sınıfı`;
+  return `${m[1].toUpperCase()} sınıfı`;
 }
 
 export function extractMilitary(text: string | null | undefined): string | null {
